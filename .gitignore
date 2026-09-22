@@ -1,0 +1,8 @@
+node_modules
+dist
+*.local
+.vite
+
+# Dexie Cloud: Zugangsdaten der CLI – niemals committen!
+dexie-cloud.key
+dexie-cloud.json
