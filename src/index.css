@@ -604,21 +604,21 @@ ol {
   grid-area: auto;
 }
 
-.measure-toggle {
-  min-width: 52px;
+.measure-select {
   min-height: 44px;
-  padding: 0 10px;
+  max-width: 140px;
+  padding: 0 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--text);
   font: inherit;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.measure-toggle:hover:not(:disabled) {
+.measure-select:hover:not(:disabled) {
   border-color: var(--accent);
 }
 

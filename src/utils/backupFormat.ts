@@ -1,6 +1,7 @@
 import type {
   BodyWeightEntry,
   Exercise,
+  ExerciseMeasure,
   PlanExercise,
   PushupEntry,
   WorkoutPlan,
@@ -86,6 +87,10 @@ function planExercises(row: Row, key: string, fail: Fail): PlanExercise[] {
   );
 }
 
+function isMeasure(value: unknown): value is ExerciseMeasure {
+  return value === 'reps' || value === 'bodyweight' || value === 'time';
+}
+
 function list<T>(value: unknown, table: string, parseRow: (row: Row, fail: Fail) => T): T[] {
   if (!Array.isArray(value)) throw new Error(`Ungültige Backup-Datei: „${table}“ fehlt.`);
   return value.map((row, index) => {
@@ -120,7 +125,7 @@ export function parseBackup(text: string): BackupData {
       name: str(row, 'name', fail),
       ...(row.measure === undefined
         ? {}
-        : { measure: row.measure === 'time' || row.measure === 'reps' ? row.measure : fail('measure') }),
+        : { measure: isMeasure(row.measure) ? row.measure : fail('measure') }),
       createdAt: date(row, 'createdAt', fail),
     })),
     workoutPlans: list(raw.workoutPlans, 'workoutPlans', (row, fail) => ({

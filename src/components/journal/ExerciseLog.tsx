@@ -3,14 +3,21 @@ import { addSet, deleteSet } from '../../db/sessions';
 import type { ExerciseMeasure, PlanExercise, WorkoutSession, WorkoutSet } from '../../db/types';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { useLastPerformance } from '../../hooks/useSessions';
+import type { BodyWeightAt } from '../../utils/bodyWeight';
 import { formatDecimalInput, formatKg, formatShortDate, parseDecimal } from '../../utils/format';
-import { epley1RM } from '../../utils/oneRepMax';
+import { setScore } from '../../utils/oneRepMax';
 import { formatSet, formatSetShort } from '../../utils/setFormat';
 import { unlockAudio } from '../../utils/signal';
 
 const FORM: Record<ExerciseMeasure, { weight: string; value: string; max: number; error: string }> = {
   reps: {
     weight: 'Gewicht (kg)',
+    value: 'Wiederholungen',
+    max: 100,
+    error: 'Bitte gültige Wiederholungen eingeben (1–100).',
+  },
+  bodyweight: {
+    weight: 'Zusatzgewicht (kg)',
     value: 'Wiederholungen',
     max: 100,
     error: 'Bitte gültige Wiederholungen eingeben (1–100).',
@@ -28,6 +35,8 @@ interface ExerciseLogProps {
   planExercise: PlanExercise;
   exerciseName: string;
   measure: ExerciseMeasure;
+  /** Körpergewicht am Trainingstag – nur für Körpergewichtsübungen relevant. */
+  bodyWeight: BodyWeightAt;
   sets: WorkoutSet[];
   isActive: boolean;
   onOpenStats: () => void;
@@ -38,6 +47,7 @@ export function ExerciseLog({
   planExercise,
   exerciseName,
   measure,
+  bodyWeight,
   sets,
   isActive,
   onOpenStats,
@@ -68,8 +78,8 @@ export function ExerciseLog({
     // Muss synchron im Klick passieren, sonst darf der Browser den Timer-Ton später nicht abspielen.
     if (isActive) unlockAudio();
 
-    // Bei Halteübungen ist das Zusatzgewicht optional.
-    const weightKg = measure === 'time' && weight.trim() === '' ? 0 : parseDecimal(weight);
+    // Bei Halte- und Körpergewichtsübungen ist das Zusatzgewicht optional.
+    const weightKg = measure !== 'reps' && weight.trim() === '' ? 0 : parseDecimal(weight);
     const repCount = Number(reps);
     if (!Number.isFinite(weightKg) || weightKg < 0 || weightKg > 1000) {
       setError('Bitte ein gültiges Gewicht eingeben.');
@@ -115,6 +125,14 @@ export function ExerciseLog({
           {lastPerformance.sets.map((s) => formatSetShort(s, measure)).join(' · ')}
         </p>
       )}
+      {measure === 'bodyweight' && (
+        <p className="last-performance">
+          Gerechnet mit Körpergewicht {formatKg(bodyWeight.weightKg)}
+          {bodyWeight.measuredAt
+            ? ` (Messung vom ${formatShortDate(bodyWeight.measuredAt)})`
+            : ' (Standardwert – trag dein Gewicht auf der Pläne-Seite ein)'}
+        </p>
+      )}
 
       <ol className="set-list">
         {sets.map((set, index) => (
@@ -122,7 +140,7 @@ export function ExerciseLog({
             <span className="set-row__index">{index + 1}</span>
             <span className="set-row__main">{formatSet(set, measure)}</span>
             <span className="set-row__meta">
-              {measure === 'reps' && `1RM ≈ ${formatKg(epley1RM(set.weightKg, set.reps))}`}
+              {measure !== 'time' && `1RM ≈ ${formatKg(setScore(set, measure, bodyWeight.weightKg))}`}
             </span>
             <button
               type="button"

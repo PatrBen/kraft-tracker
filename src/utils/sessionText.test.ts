@@ -27,6 +27,16 @@ const input: SessionTextInput = {
       ],
       previous: null,
     },
+    {
+      name: 'Klimmzug',
+      measure: 'bodyweight',
+      targetSets: 2,
+      sets: [
+        { weightKg: 0, reps: 7 }, // 82,4 × (1 + 7/30) = 101,6
+        { weightKg: 5, reps: 3 }, // 87,4 × 1,1 = 96,1
+      ],
+      previous: { date: new Date(2026, 8, 15), sets: [{ weightKg: 0, reps: 5 }] },
+    },
     { name: 'Dips', measure: 'reps', targetSets: 3, sets: [], previous: null },
   ],
 };
@@ -53,6 +63,20 @@ describe('sessionToText', () => {
     expect(text).toContain('Satz 2: 30 s mit 10 kg Zusatzgewicht');
     expect(text).toContain('Längste Haltezeit: 45 s');
     expect(text).toContain('Gesamtvolumen: 937,5 kg');
+  });
+
+  it('rechnet Klimmzüge mit Körpergewicht + Zusatzgewicht, ohne sie ins Volumen zu zählen', () => {
+    expect(text).toContain('Satz 1: 7 Wdh. mit Körpergewicht (geschätztes 1RM 101,6 kg)');
+    expect(text).toContain('Satz 2: 3 Wdh. mit Körpergewicht + 5 kg Zusatzgewicht (geschätztes 1RM 96,1 kg)');
+    expect(text).toContain('Bester Satz: 7 Wdh. → geschätztes 1RM 101,6 kg (inkl. Körpergewicht)');
+    expect(text).toContain('Letztes Mal (15.09.2026): 5 Wdh.');
+    expect(text).toContain('Gesamtvolumen: 937,5 kg');
+  });
+
+  it('nennt den Standardwert, wenn es noch keine Gewichtsmessung gab', () => {
+    const withoutWeight = sessionToText({ ...input, bodyWeight: { weightKg: 75, measuredAt: null } });
+    expect(withoutWeight).toContain('Körpergewicht: nicht erfasst – für Körpergewichtsübungen mit 75 kg gerechnet');
+    expect(withoutWeight).toContain('Satz 1: 7 Wdh. mit Körpergewicht (geschätztes 1RM 92,5 kg)');
   });
 
   it('vermerkt Übungen ohne Sätze', () => {

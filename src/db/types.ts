@@ -2,8 +2,13 @@
 // beim Synchronisieren nie kollidieren. Dexie Cloud ergänzt jede Zeile zusätzlich um `owner`
 // und `realmId` (Zugriffsrechte) – die tauchen hier bewusst nicht auf.
 
-/** Wie eine Übung gemessen wird: Gewicht × Wiederholungen oder Haltezeit in Sekunden. */
-export type ExerciseMeasure = 'reps' | 'time';
+/**
+ * Wie eine Übung gemessen wird:
+ * - `reps`: Gewicht × Wiederholungen (Langhantel, Maschine …)
+ * - `bodyweight`: (Körpergewicht + Zusatzgewicht) × Wiederholungen (Klimmzüge …)
+ * - `time`: Haltezeit in Sekunden (Deadhang, Plank …)
+ */
+export type ExerciseMeasure = 'reps' | 'bodyweight' | 'time';
 
 /** Eine Übung aus der Übungsbibliothek, z. B. "Bankdrücken". */
 export interface Exercise {
@@ -47,7 +52,7 @@ export interface WorkoutSet {
   id: string;
   sessionId: string;
   exerciseId: string;
-  /** Bei zeitbasierten Übungen das Zusatzgewicht (meist 0). */
+  /** Bei Körpergewichts- und Halteübungen nur das Zusatzgewicht (meist 0). */
   weightKg: number;
   /**
    * Wiederholungen – bei zeitbasierten Übungen (measure 'time') die Haltezeit in Sekunden.

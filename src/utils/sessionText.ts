@@ -1,6 +1,7 @@
 import type { ExerciseMeasure, WorkoutSet } from '../db/types';
+import type { BodyWeightAt } from './bodyWeight';
 import { formatDate, formatKg, formatNumber, formatSeconds, formatTime, formatDurationMinutes } from './format';
-import { epley1RM, setScore } from './oneRepMax';
+import { setScore } from './oneRepMax';
 import { formatScore } from './setFormat';
 
 type SetValues = Pick<WorkoutSet, 'weightKg' | 'reps'>;
@@ -19,24 +20,34 @@ export interface SessionTextInput {
   startedAt: Date;
   endedAt: Date | null;
   exercises: SessionTextExercise[];
-  bodyWeight: { weightKg: number; measuredAt: Date } | null;
+  /** Körpergewicht am Trainingstag; `measuredAt: null` = Standardwert, noch keine Messung. */
+  bodyWeight: BodyWeightAt;
 }
 
 const weekday = new Intl.DateTimeFormat('de-DE', { weekday: 'short' });
 
-function describeSet(set: SetValues, measure: ExerciseMeasure): string {
-  if (measure === 'time') {
-    const extra = set.weightKg > 0 ? ` mit ${formatKg(set.weightKg)} Zusatzgewicht` : '';
-    return `${formatSeconds(set.reps)}${extra}`;
+function describeSet(set: SetValues, measure: ExerciseMeasure, bodyWeightKg: number): string {
+  const oneRepMax = `geschätztes 1RM ${formatKg(setScore(set, measure, bodyWeightKg))}`;
+  switch (measure) {
+    case 'time':
+      return `${formatSeconds(set.reps)}${set.weightKg > 0 ? ` mit ${formatKg(set.weightKg)} Zusatzgewicht` : ''}`;
+    case 'bodyweight':
+      return `${set.reps} Wdh. mit Körpergewicht${set.weightKg > 0 ? ` + ${formatKg(set.weightKg)} Zusatzgewicht` : ''} (${oneRepMax})`;
+    case 'reps':
+      return `${formatKg(set.weightKg)} × ${set.reps} Wdh. (${oneRepMax})`;
   }
-  return `${formatKg(set.weightKg)} × ${set.reps} Wdh. (geschätztes 1RM ${formatKg(epley1RM(set.weightKg, set.reps))})`;
 }
 
 function shortSet(set: SetValues, measure: ExerciseMeasure): string {
-  if (measure === 'time') {
-    return set.weightKg > 0 ? `${formatSeconds(set.reps)} (+${formatKg(set.weightKg)})` : formatSeconds(set.reps);
+  const extra = set.weightKg > 0 ? ` (+${formatKg(set.weightKg)})` : '';
+  switch (measure) {
+    case 'time':
+      return `${formatSeconds(set.reps)}${extra}`;
+    case 'bodyweight':
+      return `${set.reps} Wdh.${extra}`;
+    case 'reps':
+      return `${formatKg(set.weightKg)} × ${set.reps}`;
   }
-  return `${formatKg(set.weightKg)} × ${set.reps}`;
 }
 
 function volume(sets: SetValues[]): number {
@@ -59,10 +70,14 @@ export function sessionToText(input: SessionTextInput): string {
         ? `${formatTime(startedAt)}–${formatTime(endedAt)} Uhr (${formatDurationMinutes(startedAt, endedAt)})`
         : `ab ${formatTime(startedAt)} Uhr (läuft noch)`),
   );
-  if (input.bodyWeight) {
+  const bodyWeightKg = input.bodyWeight.weightKg;
+  const hasBodyweightExercise = input.exercises.some((e) => e.measure === 'bodyweight' && e.sets.length > 0);
+  if (input.bodyWeight.measuredAt) {
     lines.push(
-      `Körpergewicht: ${formatKg(input.bodyWeight.weightKg)} (gemessen am ${formatDate(input.bodyWeight.measuredAt)})`,
+      `Körpergewicht: ${formatKg(bodyWeightKg)} (gemessen am ${formatDate(input.bodyWeight.measuredAt)})`,
     );
+  } else if (hasBodyweightExercise) {
+    lines.push(`Körpergewicht: nicht erfasst – für Körpergewichtsübungen mit ${formatKg(bodyWeightKg)} gerechnet`);
   }
 
   let totalSets = 0;
@@ -70,6 +85,7 @@ export function sessionToText(input: SessionTextInput): string {
 
   for (const exercise of input.exercises) {
     const { sets, measure } = exercise;
+    const score = (set: SetValues) => setScore(set, measure, bodyWeightKg);
     lines.push('');
     const planned =
       exercise.targetSets > 0
@@ -77,14 +93,15 @@ export function sessionToText(input: SessionTextInput): string {
         : `${sets.length} ${sets.length === 1 ? 'Satz' : 'Sätze'} (nicht im Plan)`;
     lines.push(`${exercise.name} – ${sets.length > 0 ? planned : `keine Sätze eingetragen (${exercise.targetSets} geplant)`}`);
 
-    sets.forEach((set, i) => lines.push(`  Satz ${i + 1}: ${describeSet(set, measure)}`));
+    sets.forEach((set, i) => lines.push(`  Satz ${i + 1}: ${describeSet(set, measure, bodyWeightKg)}`));
 
     if (sets.length > 0) {
-      const best = sets.reduce((a, b) => (setScore(b, measure) > setScore(a, measure) ? b : a));
+      const best = sets.reduce((a, b) => (score(b) > score(a) ? b : a));
       lines.push(
         measure === 'time'
           ? `  Längste Haltezeit: ${formatSeconds(best.reps)}`
-          : `  Bester Satz: ${shortSet(best, measure)} → geschätztes 1RM ${formatScore(setScore(best, measure), measure)}`,
+          : `  Bester Satz: ${shortSet(best, measure)} → geschätztes 1RM ${formatScore(score(best), measure)}` +
+              (measure === 'bodyweight' ? ' (inkl. Körpergewicht)' : ''),
       );
       if (measure === 'reps') {
         lines.push(`  Volumen: ${formatNumber(volume(sets))} kg`);
@@ -106,7 +123,14 @@ export function sessionToText(input: SessionTextInput): string {
   lines.push(`  Gesamtvolumen: ${formatNumber(totalVolume)} kg (Gewicht × Wiederholungen)`);
   lines.push('');
   lines.push('Hinweise: Das 1RM ist nach Epley geschätzt: Gewicht × (1 + Wiederholungen / 30).');
-  lines.push('Halteübungen (z. B. Deadhang) sind in Sekunden angegeben und zählen nicht zum Volumen.');
+  if (hasBodyweightExercise) {
+    lines.push(
+      'Körpergewichtsübungen (z. B. Klimmzüge) sind mit Körpergewicht + Zusatzgewicht gerechnet und zählen nicht zum Volumen.',
+    );
+  }
+  if (input.exercises.some((e) => e.measure === 'time' && e.sets.length > 0)) {
+    lines.push('Halteübungen (z. B. Deadhang) sind in Sekunden angegeben und zählen nicht zum Volumen.');
+  }
 
   return `${lines.join('\n')}\n`;
 }

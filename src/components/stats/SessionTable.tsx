@@ -1,10 +1,11 @@
 import type { ExerciseMeasure } from '../../db/types';
-import { formatDate, formatSignedKg } from '../../utils/format';
+import { DEFAULT_BODY_WEIGHT_KG } from '../../utils/bodyWeight';
+import { formatDate, formatKg, formatSignedKg } from '../../utils/format';
 import type { SessionBest } from '../../utils/oneRepMax';
 import { formatScore, formatSet } from '../../utils/setFormat';
 
 function formatDelta(delta: number, measure: ExerciseMeasure): string {
-  if (measure === 'reps') return formatSignedKg(delta);
+  if (measure !== 'time') return formatSignedKg(delta);
   if (Math.round(delta) === 0) return '±0 s';
   return `${delta > 0 ? '+' : '−'}${Math.abs(Math.round(delta))} s`;
 }
@@ -17,6 +18,8 @@ interface SessionTableProps {
 /** Tabellarische Fassung des Diagramms – jeder Wert ist auch ohne Hover lesbar. */
 export function SessionTable({ data, measure }: SessionTableProps) {
   const rows = [...data].reverse();
+  const withBodyWeight = measure === 'bodyweight';
+  const usesDefault = rows.some((r) => r.bodyWeight && !r.bodyWeight.measuredAt);
 
   return (
     <div className="card">
@@ -27,6 +30,11 @@ export function SessionTable({ data, measure }: SessionTableProps) {
             <tr>
               <th scope="col">Datum</th>
               <th scope="col">Bester Satz</th>
+              {withBodyWeight && (
+                <th scope="col" className="num">
+                  Körpergew.
+                </th>
+              )}
               <th scope="col" className="num">
                 {measure === 'time' ? 'Zeit' : '1RM'}
               </th>
@@ -42,6 +50,12 @@ export function SessionTable({ data, measure }: SessionTableProps) {
                 <tr key={row.sessionId}>
                   <td>{formatDate(row.date)}</td>
                   <td>{formatSet(row, measure)}</td>
+                  {withBodyWeight && (
+                    <td className="num">
+                      {row.bodyWeight && formatKg(row.bodyWeight.weightKg)}
+                      {row.bodyWeight && !row.bodyWeight.measuredAt && '*'}
+                    </td>
+                  )}
                   <td className="num">{formatScore(row.value, measure)}</td>
                   <td className="num muted">
                     {previous ? formatDelta(row.value - previous.value, measure) : '–'}
@@ -52,6 +66,12 @@ export function SessionTable({ data, measure }: SessionTableProps) {
           </tbody>
         </table>
       </div>
+      {usesDefault && (
+        <p className="muted card__hint">
+          * Standardwert {formatKg(DEFAULT_BODY_WEIGHT_KG)} – bis zu diesem Tag gab es noch keine
+          Gewichtsmessung.
+        </p>
+      )}
     </div>
   );
 }

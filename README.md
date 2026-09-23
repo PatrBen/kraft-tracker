@@ -79,3 +79,6 @@ src/
 `@id` sind global eindeutige String-IDs, damit Einträge verschiedener Geräte nie kollidieren.
 Das 1RM wird nicht gespeichert, sondern bei Bedarf aus Gewicht und Wiederholungen berechnet.
 Halteübungen (`exercises.measure = 'time'`, z. B. Deadhang) speichern die Sekunden im Feld `reps`.
+Körpergewichtsübungen (`measure = 'bodyweight'`, z. B. Klimmzüge) speichern in `weightKg` nur das
+Zusatzgewicht; die Statistik rechnet mit Körpergewicht + Zusatzgewicht. Als Körpergewicht gilt die
+letzte Messung bis zum Trainingstag, davor 75 kg (`DEFAULT_BODY_WEIGHT_KG`).

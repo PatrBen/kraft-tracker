@@ -13,13 +13,17 @@ export function useExerciseStats(
 
     const sets = await db.sets.where('exerciseId').equals(exerciseId).toArray();
     const sessionIds = [...new Set(sets.map((s) => s.sessionId))];
-    const sessions = await db.workoutSessions.bulkGet(sessionIds);
+    const [sessions, bodyWeights] = await Promise.all([
+      db.workoutSessions.bulkGet(sessionIds),
+      // Nur für Körpergewichtsübungen nötig – dann aktualisiert sich die Statistik auch bei neuen Messungen.
+      measure === 'bodyweight' ? db.bodyWeights.orderBy('measuredAt').toArray() : [],
+    ]);
 
     const sessionDates = new Map<string, Date>();
     for (const session of sessions) {
       if (session) sessionDates.set(session.id, session.startedAt);
     }
-    return bestPerSession(sets, sessionDates, measure);
+    return bestPerSession(sets, sessionDates, measure, bodyWeights);
   }, [exerciseId, measure]);
 }
 

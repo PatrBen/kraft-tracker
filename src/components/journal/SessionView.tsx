@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { deleteSession, finishSession } from '../../db/sessions';
 import type { WorkoutSet } from '../../db/types';
+import { useBodyWeights } from '../../hooks/useBodyWeights';
 import { useExerciseMap } from '../../hooks/useExercises';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { useSession, useSessionSets } from '../../hooks/useSessions';
+import { bodyWeightAt } from '../../utils/bodyWeight';
 import { exerciseMeasure } from '../../utils/exerciseMeasure';
 import { formatDate, formatDurationMinutes, formatTime } from '../../utils/format';
 import { EmptyState } from '../common/EmptyState';
@@ -22,6 +24,7 @@ export function SessionView({ sessionId, onBack, onOpenStats }: SessionViewProps
   const session = useSession(sessionId);
   const sets = useSessionSets(sessionId);
   const exerciseMap = useExerciseMap();
+  const bodyWeights = useBodyWeights();
   const timer = useRestTimer();
 
   const setsByExercise = useMemo(() => {
@@ -34,7 +37,14 @@ export function SessionView({ sessionId, onBack, onOpenStats }: SessionViewProps
     return map;
   }, [sets]);
 
-  if (session === undefined || sets === undefined || exerciseMap === undefined) return null;
+  if (
+    session === undefined ||
+    sets === undefined ||
+    exerciseMap === undefined ||
+    bodyWeights === undefined
+  ) {
+    return null;
+  }
 
   if (session === null) {
     return (
@@ -110,6 +120,7 @@ export function SessionView({ sessionId, onBack, onOpenStats }: SessionViewProps
             planExercise={pe}
             exerciseName={exerciseMap.get(pe.exerciseId)?.name ?? 'Unbekannte Übung'}
             measure={exerciseMeasure(exerciseMap.get(pe.exerciseId))}
+            bodyWeight={bodyWeightAt(bodyWeights, session.startedAt)}
             sets={setsByExercise.get(pe.exerciseId) ?? []}
             isActive={isActive}
             onOpenStats={() => onOpenStats(pe.exerciseId)}

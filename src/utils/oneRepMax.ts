@@ -1,4 +1,5 @@
-import type { ExerciseMeasure, WorkoutSet } from '../db/types';
+import type { BodyWeightEntry, ExerciseMeasure, WorkoutSet } from '../db/types';
+import { bodyWeightAt, DEFAULT_BODY_WEIGHT_KG, type BodyWeightAt } from './bodyWeight';
 
 /** Geschätztes 1RM nach Epley: Gewicht × (1 + Wiederholungen / 30). */
 export function epley1RM(weightKg: number, reps: number): number {
@@ -6,11 +7,24 @@ export function epley1RM(weightKg: number, reps: number): number {
 }
 
 /**
- * Kennzahl eines Satzes für die Statistik: geschätztes 1RM (kg) bei Wiederholungsübungen,
- * Haltezeit (s) bei zeitbasierten Übungen.
+ * Kennzahl eines Satzes für die Statistik:
+ * - `reps`: geschätztes 1RM aus Gewicht × Wiederholungen
+ * - `bodyweight`: geschätztes 1RM aus (Körpergewicht + Zusatzgewicht) × Wiederholungen
+ * - `time`: Haltezeit in Sekunden
  */
-export function setScore(set: Pick<WorkoutSet, 'weightKg' | 'reps'>, measure: ExerciseMeasure): number {
-  return measure === 'time' ? set.reps : epley1RM(set.weightKg, set.reps);
+export function setScore(
+  set: Pick<WorkoutSet, 'weightKg' | 'reps'>,
+  measure: ExerciseMeasure,
+  bodyWeightKg = DEFAULT_BODY_WEIGHT_KG,
+): number {
+  switch (measure) {
+    case 'time':
+      return set.reps;
+    case 'bodyweight':
+      return epley1RM(bodyWeightKg + set.weightKg, set.reps);
+    case 'reps':
+      return epley1RM(set.weightKg, set.reps);
+  }
 }
 
 export interface SessionBest {
@@ -21,16 +35,20 @@ export interface SessionBest {
   /** Der Satz, aus dem der Bestwert der Session stammt. */
   weightKg: number;
   reps: number;
+  /** Nur bei Körpergewichtsübungen: das verwendete Körpergewicht. */
+  bodyWeight: BodyWeightAt | null;
 }
 
 /**
  * Bester Satz pro Session nach `setScore`, chronologisch aufsteigend sortiert.
- * Sätze, deren Session in `sessionDates` fehlt, werden ignoriert.
+ * Sätze, deren Session in `sessionDates` fehlt, werden ignoriert. Für Körpergewichtsübungen
+ * gilt das Körpergewicht am Trainingstag (`bodyWeights` chronologisch sortiert).
  */
 export function bestPerSession(
   sets: WorkoutSet[],
   sessionDates: Map<string, Date>,
   measure: ExerciseMeasure,
+  bodyWeights: BodyWeightEntry[] = [],
 ): SessionBest[] {
   const bestBySession = new Map<string, SessionBest>();
 
@@ -38,7 +56,8 @@ export function bestPerSession(
     const date = sessionDates.get(set.sessionId);
     if (!date) continue;
 
-    const value = setScore(set, measure);
+    const bodyWeight = measure === 'bodyweight' ? bodyWeightAt(bodyWeights, date) : null;
+    const value = setScore(set, measure, bodyWeight?.weightKg);
     const current = bestBySession.get(set.sessionId);
     if (!current || value > current.value) {
       bestBySession.set(set.sessionId, {
@@ -47,6 +66,7 @@ export function bestPerSession(
         value,
         weightKg: set.weightKg,
         reps: set.reps,
+        bodyWeight,
       });
     }
   }

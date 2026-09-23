@@ -5,6 +5,7 @@ const data: BackupData = {
   exercises: [
     { id: 'exe1', name: 'Bankdrücken', createdAt: new Date('2026-09-01T10:00:00Z') },
     { id: 'exe2', name: 'Deadhang', measure: 'time', createdAt: new Date('2026-09-01T10:00:00Z') },
+    { id: 'exe3', name: 'Klimmzug', measure: 'bodyweight', createdAt: new Date('2026-09-01T10:00:00Z') },
   ],
   pushups: [{ id: 'psh1', count: 12, doneAt: new Date('2026-09-22T08:00:00Z') }],
   bodyWeights: [{ id: 'bw1', weightKg: 82.4, measuredAt: new Date('2026-09-22T06:30:00Z') }],

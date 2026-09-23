@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { ExerciseMeasure } from '../../db/types';
+import { DEFAULT_BODY_WEIGHT_KG } from '../../utils/bodyWeight';
 import { formatDate, formatKg, formatPercent, pluralize } from '../../utils/format';
 import { percentChange, type SessionBest } from '../../utils/oneRepMax';
 import { formatScore, formatSet } from '../../utils/setFormat';
@@ -14,12 +15,25 @@ const TEXTS: Record<ExerciseMeasure, { title: string; subtitle: string; valueLab
     subtitle: 'Bester Satz je Session nach Epley: Gewicht × (1 + Wdh. / 30)',
     valueLabel: 'geschätztes 1RM',
   },
+  bodyweight: {
+    title: 'Geschätztes 1RM in kg',
+    subtitle:
+      'Bester Satz je Session nach Epley, mit Körpergewicht + Zusatzgewicht. ' +
+      `Körpergewicht: letzte Messung bis zum Trainingstag, davor ${formatKg(DEFAULT_BODY_WEIGHT_KG)}.`,
+    valueLabel: 'geschätztes 1RM inkl. Körpergewicht',
+  },
   time: {
     title: 'Längste Haltezeit in Sekunden',
     subtitle: 'Bester Satz je Session',
     valueLabel: 'Haltezeit',
   },
 };
+
+/** " · Körpergewicht 82,4 kg" bzw. " · Körpergewicht 75 kg (Standardwert)" – nur bei Körpergewichtsübungen. */
+function bodyWeightNote(bodyWeight: SessionBest['bodyWeight']): string {
+  if (!bodyWeight) return '';
+  return ` · Körpergewicht ${formatKg(bodyWeight.weightKg)}${bodyWeight.measuredAt ? '' : ' (Standardwert)'}`;
+}
 
 interface ExerciseStatsProps {
   data: SessionBest[];
@@ -62,7 +76,7 @@ export function ExerciseStats({ data, measure }: ExerciseStatsProps) {
           detail={
             measure === 'time'
               ? `am ${formatDate(best.date)}`
-              : `${formatKg(best.weightKg)} × ${best.reps} am ${formatDate(best.date)}`
+              : `${formatSet(best, measure)} am ${formatDate(best.date)}`
           }
         />
       </div>
@@ -76,7 +90,7 @@ export function ExerciseStats({ data, measure }: ExerciseStatsProps) {
           tooltip={(p) => ({
             value: format(p.value),
             label: text.valueLabel,
-            detail: `${formatDate(p.date)} · ${formatSet(p, measure)}`,
+            detail: `${formatDate(p.date)} · ${formatSet(p, measure)}${bodyWeightNote(p.bodyWeight)}`,
           })}
         />
       </div>

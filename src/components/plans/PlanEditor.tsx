@@ -1,11 +1,17 @@
 import { useId, useState, type FormEvent } from 'react';
 import { findOrCreateExercise, normalizeExerciseName, setExerciseMeasure } from '../../db/exercises';
 import { savePlan } from '../../db/plans';
-import type { PlanExercise, WorkoutPlan } from '../../db/types';
+import type { ExerciseMeasure, PlanExercise, WorkoutPlan } from '../../db/types';
 import { useExerciseMap } from '../../hooks/useExercises';
 import { exerciseMeasure } from '../../utils/exerciseMeasure';
 import { ExerciseNameInput } from '../common/ExerciseNameInput';
 import { Stepper } from '../common/Stepper';
+
+const MEASURE_OPTIONS: { value: ExerciseMeasure; label: string }[] = [
+  { value: 'reps', label: 'Gewicht' },
+  { value: 'bodyweight', label: 'Körpergewicht' },
+  { value: 'time', label: 'Sekunden' },
+];
 
 interface PlanEditorProps {
   /** `null` = neuen Plan anlegen. */
@@ -122,18 +128,22 @@ export function PlanEditor({ plan, onDone }: PlanEditorProps) {
                     value={item.targetSets}
                     onChange={(value) => updateTargetSets(index, value)}
                   />
-                  <button
-                    type="button"
-                    className="measure-toggle"
-                    onClick={() =>
-                      setExerciseMeasure(item.exerciseId, measure === 'time' ? 'reps' : 'time')
+                  <select
+                    className="measure-select"
+                    value={measure}
+                    onChange={(e) =>
+                      setExerciseMeasure(item.exerciseId, e.target.value as ExerciseMeasure)
                     }
                     disabled={!exercise}
-                    title="Messart umschalten: Wiederholungen oder Sekunden"
-                    aria-label={`${exerciseName} wird in ${measure === 'time' ? 'Sekunden' : 'Wiederholungen'} gemessen – umschalten`}
+                    aria-label={`Messart für ${exerciseName}`}
+                    title="Wie wird die Übung gemessen?"
                   >
-                    {measure === 'time' ? 'Sek.' : 'Wdh.'}
-                  </button>
+                    {MEASURE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="editor-row__actions">
                   <button

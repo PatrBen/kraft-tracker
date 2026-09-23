@@ -1,6 +1,8 @@
 import type { Exercise, ExerciseMeasure } from '../db/types';
 
-// Halteübungen, die in Sekunden gemessen werden. Erweiterbar – oder im Plan-Editor je Übung umschalten.
+// Automatische Erkennung am Namen. Erweiterbar – oder im Plan-Editor je Übung umstellen.
+
+/** Halteübungen, gemessen in Sekunden. */
 const TIME_BASED_NAMES = [
   /dead\s*-?\s*hang/i,
   /toter\s*hang/i,
@@ -12,11 +14,16 @@ const TIME_BASED_NAMES = [
   /hollow\s*(body\s*)?hold/i,
 ];
 
+/** Übungen mit dem eigenen Körpergewicht als Last (plus optionalem Zusatzgewicht). */
+const BODYWEIGHT_NAMES = [/klimmz(ü|ue|u)g/i, /pull-?\s?ups?\b/i, /chin-?\s?ups?\b/i];
+
 export function guessMeasure(name: string): ExerciseMeasure {
-  return TIME_BASED_NAMES.some((pattern) => pattern.test(name)) ? 'time' : 'reps';
+  if (TIME_BASED_NAMES.some((pattern) => pattern.test(name))) return 'time';
+  if (BODYWEIGHT_NAMES.some((pattern) => pattern.test(name))) return 'bodyweight';
+  return 'reps';
 }
 
-/** Messart einer Übung: gespeicherter Wert, sonst aus dem Namen abgeleitet (z. B. Deadhang → Sekunden). */
+/** Messart einer Übung: gespeicherter Wert, sonst aus dem Namen abgeleitet (z. B. Klimmzug → Körpergewicht). */
 export function exerciseMeasure(exercise: Pick<Exercise, 'name' | 'measure'> | undefined): ExerciseMeasure {
   if (!exercise) return 'reps';
   return exercise.measure ?? guessMeasure(exercise.name);
