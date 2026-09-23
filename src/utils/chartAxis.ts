@@ -26,6 +26,15 @@ export function niceAxis(values: number[], targetTicks = 4): NiceAxis {
   return { domain: [lo, hi], ticks };
 }
 
+/** Y-Achse ab 0 mit runden Ticks für Säulen, z. B. Maximum 48 → 0 / 20 / 40 / 60. */
+export function zeroBasedAxis(max: number, targetTicks = 4): NiceAxis {
+  const step = niceStep(Math.max(max, 1) / targetTicks);
+  const top = Math.max(step, Math.ceil(max / step) * step);
+  const ticks: number[] = [];
+  for (let t = 0; t <= top + step / 2; t += step) ticks.push(Math.round(t * 100) / 100);
+  return { domain: [0, top], ticks };
+}
+
 /**
  * X-Ticks auf echten Session-Tagen (ein Tick pro Kalendertag), bei vielen Sessions
  * gleichmäßig ausgedünnt – erster und letzter Tag bleiben immer erhalten.

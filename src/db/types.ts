@@ -2,10 +2,15 @@
 // beim Synchronisieren nie kollidieren. Dexie Cloud ergänzt jede Zeile zusätzlich um `owner`
 // und `realmId` (Zugriffsrechte) – die tauchen hier bewusst nicht auf.
 
+/** Wie eine Übung gemessen wird: Gewicht × Wiederholungen oder Haltezeit in Sekunden. */
+export type ExerciseMeasure = 'reps' | 'time';
+
 /** Eine Übung aus der Übungsbibliothek, z. B. "Bankdrücken". */
 export interface Exercise {
   id: string;
   name: string;
+  /** Fehlt bei älteren Übungen – dann entscheidet der Name (siehe utils/exerciseMeasure.ts). */
+  measure?: ExerciseMeasure;
   createdAt: Date;
 }
 
@@ -42,7 +47,26 @@ export interface WorkoutSet {
   id: string;
   sessionId: string;
   exerciseId: string;
+  /** Bei zeitbasierten Übungen das Zusatzgewicht (meist 0). */
   weightKg: number;
+  /**
+   * Wiederholungen – bei zeitbasierten Übungen (measure 'time') die Haltezeit in Sekunden.
+   * Bewusst dasselbe Feld, damit bereits synchronisierte Sätze gültig bleiben.
+   */
   reps: number;
   createdAt: Date;
+}
+
+/** Ein Eintrag im Liegestütz-Zähler, z. B. 12 Stück um 14:03 Uhr. */
+export interface PushupEntry {
+  id: string;
+  count: number;
+  doneAt: Date;
+}
+
+/** Eine Messung des Körpergewichts. */
+export interface BodyWeightEntry {
+  id: string;
+  weightKg: number;
+  measuredAt: Date;
 }

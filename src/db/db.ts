@@ -1,6 +1,13 @@
 import Dexie from 'dexie';
 import dexieCloud, { type DexieCloudTable } from 'dexie-cloud-addon';
-import type { Exercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types';
+import type {
+  BodyWeightEntry,
+  Exercise,
+  PushupEntry,
+  WorkoutPlan,
+  WorkoutSession,
+  WorkoutSet,
+} from './types';
 
 // Neuer Name, weil sich der Primärschlüssel geändert hat (++id → @id); IndexedDB kann das
 // bei einer bestehenden Tabelle nicht umstellen.
@@ -9,6 +16,8 @@ export const db = new Dexie('kraft-tracker-v2', { addons: [dexieCloud] }) as Dex
   workoutPlans: DexieCloudTable<WorkoutPlan, 'id'>;
   workoutSessions: DexieCloudTable<WorkoutSession, 'id'>;
   sets: DexieCloudTable<WorkoutSet, 'id'>;
+  pushups: DexieCloudTable<PushupEntry, 'id'>;
+  bodyWeights: DexieCloudTable<BodyWeightEntry, 'id'>;
 };
 
 // `@id` = global eindeutige String-ID, erzeugt beim Anlegen. Nur indizierte Felder stehen im
@@ -18,6 +27,12 @@ db.version(1).stores({
   workoutPlans: '@id, name',
   workoutSessions: '@id, planId, startedAt',
   sets: '@id, sessionId, exerciseId, [sessionId+exerciseId], [exerciseId+createdAt]',
+});
+
+// v2: Liegestütz-Zähler und Körpergewicht. Bestehende Tabellen bleiben unverändert.
+db.version(2).stores({
+  pushups: '@id, doneAt',
+  bodyWeights: '@id, measuredAt',
 });
 
 /** URL der Dexie-Cloud-Datenbank aus `.env`. Ohne URL läuft die App rein lokal. */

@@ -57,8 +57,9 @@ export function BackupSection() {
     <div className="card">
       <h2 className="card__title">Backup</h2>
       <p className="muted card__text">
-        Sichert alle Pläne, Trainings und Sätze in einer Datei. Bewahre sie z. B. in deiner Cloud
-        oder per Mail auf – damit kannst du alles jederzeit wiederherstellen.
+        Sichert alle Pläne, Trainings, Sätze, Liegestütze und Gewichtsmessungen in einer Datei.
+        Bewahre sie z. B. in deiner Cloud oder per Mail auf – damit kannst du alles jederzeit
+        wiederherstellen.
       </p>
       <p className="card__text">
         Letztes Backup: <strong>{lastBackup ? formatDate(lastBackup) : 'noch keins'}</strong>

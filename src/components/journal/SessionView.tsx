@@ -4,11 +4,13 @@ import type { WorkoutSet } from '../../db/types';
 import { useExerciseMap } from '../../hooks/useExercises';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { useSession, useSessionSets } from '../../hooks/useSessions';
+import { exerciseMeasure } from '../../utils/exerciseMeasure';
 import { formatDate, formatDurationMinutes, formatTime } from '../../utils/format';
 import { EmptyState } from '../common/EmptyState';
 import { RestTimerSettings } from '../timer/RestTimerSettings';
 import { AddSessionExercise } from './AddSessionExercise';
 import { ExerciseLog } from './ExerciseLog';
+import { SessionExport } from './SessionExport';
 
 interface SessionViewProps {
   sessionId: string;
@@ -107,6 +109,7 @@ export function SessionView({ sessionId, onBack, onOpenStats }: SessionViewProps
             session={session}
             planExercise={pe}
             exerciseName={exerciseMap.get(pe.exerciseId)?.name ?? 'Unbekannte Übung'}
+            measure={exerciseMeasure(exerciseMap.get(pe.exerciseId))}
             sets={setsByExercise.get(pe.exerciseId) ?? []}
             isActive={isActive}
             onOpenStats={() => onOpenStats(pe.exerciseId)}
@@ -115,6 +118,7 @@ export function SessionView({ sessionId, onBack, onOpenStats }: SessionViewProps
       </div>
 
       <AddSessionExercise session={session} />
+      {sets.length > 0 && <SessionExport session={session} />}
     </section>
   );
 }

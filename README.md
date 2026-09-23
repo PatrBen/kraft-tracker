@@ -52,12 +52,15 @@ Einträge anhand ihrer ID wieder her (einfügen oder überschreiben) und löscht
 src/
   db/          Dexie-Schema + Cloud-Konfiguration (db.ts), Typen, Datenzugriff, Backup
   hooks/       React-Anbindung: Live-Queries, Hash-Router, Pausentimer, Sync-Status, Wake Lock
-  utils/       1RM (Epley), Formatierung, Achsen-Ticks, Backup-Format, Ton/Vibration
+  utils/       1RM (Epley), Zeiträume (Tag/Woche/Monat/Jahr), Formatierung, Achsen-Ticks,
+               Backup-Format, Trainings-Text für Claude, Ton/Vibration
   components/
-    plans/     Plan-Verwaltung
-    journal/   Tagebuch: Übersicht, Session, Satz-Eingabe, Nachtragen
+    plans/     Plan-Verwaltung (inkl. Umschalter Wiederholungen ↔ Sekunden)
+    daily/     Liegestütz-Zähler und Körpergewicht (auf der Pläne-Seite)
+    journal/   Tagebuch: Übersicht, Session, Satz-Eingabe, Nachtragen, Text-Export
     timer/     Pausentimer (Provider, Leiste, Einstellungen)
-    stats/     Statistik: Kennzahlen, 1RM-Diagramm, Tabelle
+    charts/    Linien- und Säulendiagramm, gemeinsamer Tooltip
+    stats/     Statistik: Übungen (1RM / Haltezeit), Liegestütze, Körpergewicht
     data/      Sync-Status, Anmeldung, Backup
     cloud/     Login-Dialog (E-Mail → Code)
 ```
@@ -70,6 +73,9 @@ src/
 | `workoutPlans`    | `@id, name` – Übungen + Ziel-Sätze als Array im Plan             |
 | `workoutSessions` | `@id, planId, startedAt` – Snapshot der Plan-Übungen beim Start  |
 | `sets`            | `@id, sessionId, exerciseId, [sessionId+exerciseId], [exerciseId+createdAt]` |
+| `pushups`         | `@id, doneAt` – ein Eintrag pro "+1" mit Anzahl (seit v2)        |
+| `bodyWeights`     | `@id, measuredAt` – Körpergewicht in kg (seit v2)                |
 
 `@id` sind global eindeutige String-IDs, damit Einträge verschiedener Geräte nie kollidieren.
 Das 1RM wird nicht gespeichert, sondern bei Bedarf aus Gewicht und Wiederholungen berechnet.
+Halteübungen (`exercises.measure = 'time'`, z. B. Deadhang) speichern die Sekunden im Feld `reps`.

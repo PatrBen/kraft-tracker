@@ -1,13 +1,21 @@
-import { formatDate, formatKg, formatNumber } from '../../utils/format';
+import type { ExerciseMeasure } from '../../db/types';
+import { formatDate, formatSignedKg } from '../../utils/format';
 import type { SessionBest } from '../../utils/oneRepMax';
+import { formatScore, formatSet } from '../../utils/setFormat';
 
-function formatDelta(delta: number): string {
-  if (Math.abs(delta) < 0.05) return '±0 kg';
-  return `${delta > 0 ? '+' : '−'}${formatNumber(Math.abs(delta))} kg`;
+function formatDelta(delta: number, measure: ExerciseMeasure): string {
+  if (measure === 'reps') return formatSignedKg(delta);
+  if (Math.round(delta) === 0) return '±0 s';
+  return `${delta > 0 ? '+' : '−'}${Math.abs(Math.round(delta))} s`;
+}
+
+interface SessionTableProps {
+  data: SessionBest[];
+  measure: ExerciseMeasure;
 }
 
 /** Tabellarische Fassung des Diagramms – jeder Wert ist auch ohne Hover lesbar. */
-export function SessionTable({ data }: { data: SessionBest[] }) {
+export function SessionTable({ data, measure }: SessionTableProps) {
   const rows = [...data].reverse();
 
   return (
@@ -20,7 +28,7 @@ export function SessionTable({ data }: { data: SessionBest[] }) {
               <th scope="col">Datum</th>
               <th scope="col">Bester Satz</th>
               <th scope="col" className="num">
-                1RM
+                {measure === 'time' ? 'Zeit' : '1RM'}
               </th>
               <th scope="col" className="num">
                 Δ Vorher
@@ -33,12 +41,10 @@ export function SessionTable({ data }: { data: SessionBest[] }) {
               return (
                 <tr key={row.sessionId}>
                   <td>{formatDate(row.date)}</td>
-                  <td>
-                    {formatKg(row.weightKg)} × {row.reps}
-                  </td>
-                  <td className="num">{formatKg(row.oneRepMax)}</td>
+                  <td>{formatSet(row, measure)}</td>
+                  <td className="num">{formatScore(row.value, measure)}</td>
                   <td className="num muted">
-                    {previous ? formatDelta(row.oneRepMax - previous.oneRepMax) : '–'}
+                    {previous ? formatDelta(row.value - previous.value, measure) : '–'}
                   </td>
                 </tr>
               );

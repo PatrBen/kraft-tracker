@@ -1,22 +1,33 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { addSet, deleteSet } from '../../db/sessions';
-import type { PlanExercise, WorkoutSession, WorkoutSet } from '../../db/types';
+import type { ExerciseMeasure, PlanExercise, WorkoutSession, WorkoutSet } from '../../db/types';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { useLastPerformance } from '../../hooks/useSessions';
-import {
-  formatDecimalInput,
-  formatKg,
-  formatNumber,
-  formatShortDate,
-  parseDecimal,
-} from '../../utils/format';
+import { formatDecimalInput, formatKg, formatShortDate, parseDecimal } from '../../utils/format';
 import { epley1RM } from '../../utils/oneRepMax';
+import { formatSet, formatSetShort } from '../../utils/setFormat';
 import { unlockAudio } from '../../utils/signal';
+
+const FORM: Record<ExerciseMeasure, { weight: string; value: string; max: number; error: string }> = {
+  reps: {
+    weight: 'Gewicht (kg)',
+    value: 'Wiederholungen',
+    max: 100,
+    error: 'Bitte gültige Wiederholungen eingeben (1–100).',
+  },
+  time: {
+    weight: 'Zusatzgewicht (kg)',
+    value: 'Sekunden',
+    max: 3600,
+    error: 'Bitte eine Haltezeit in Sekunden eingeben (1–3600).',
+  },
+};
 
 interface ExerciseLogProps {
   session: WorkoutSession;
   planExercise: PlanExercise;
   exerciseName: string;
+  measure: ExerciseMeasure;
   sets: WorkoutSet[];
   isActive: boolean;
   onOpenStats: () => void;
@@ -26,10 +37,12 @@ export function ExerciseLog({
   session,
   planExercise,
   exerciseName,
+  measure,
   sets,
   isActive,
   onOpenStats,
 }: ExerciseLogProps) {
+  const form = FORM[measure];
   const timer = useRestTimer();
   const lastPerformance = useLastPerformance(planExercise.exerciseId, session.startedAt);
   const [weight, setWeight] = useState('');
@@ -55,14 +68,15 @@ export function ExerciseLog({
     // Muss synchron im Klick passieren, sonst darf der Browser den Timer-Ton später nicht abspielen.
     if (isActive) unlockAudio();
 
-    const weightKg = parseDecimal(weight);
+    // Bei Halteübungen ist das Zusatzgewicht optional.
+    const weightKg = measure === 'time' && weight.trim() === '' ? 0 : parseDecimal(weight);
     const repCount = Number(reps);
     if (!Number.isFinite(weightKg) || weightKg < 0 || weightKg > 1000) {
       setError('Bitte ein gültiges Gewicht eingeben.');
       return;
     }
-    if (!Number.isInteger(repCount) || repCount < 1 || repCount > 100) {
-      setError('Bitte gültige Wiederholungen eingeben (1–100).');
+    if (!Number.isInteger(repCount) || repCount < 1 || repCount > form.max) {
+      setError(form.error);
       return;
     }
 
@@ -72,7 +86,7 @@ export function ExerciseLog({
   };
 
   const handleDeleteSet = async (set: WorkoutSet, index: number) => {
-    if (window.confirm(`Satz ${index + 1} (${formatKg(set.weightKg)} × ${set.reps}) löschen?`)) {
+    if (window.confirm(`Satz ${index + 1} (${formatSet(set, measure)}) löschen?`)) {
       await deleteSet(set.id);
     }
   };
@@ -98,7 +112,7 @@ export function ExerciseLog({
       {lastPerformance && (
         <p className="last-performance">
           Letztes Mal ({formatShortDate(lastPerformance.date)}):{' '}
-          {lastPerformance.sets.map((s) => `${formatNumber(s.weightKg)} × ${s.reps}`).join(' · ')}
+          {lastPerformance.sets.map((s) => formatSetShort(s, measure)).join(' · ')}
         </p>
       )}
 
@@ -106,10 +120,10 @@ export function ExerciseLog({
         {sets.map((set, index) => (
           <li key={set.id} className="set-row">
             <span className="set-row__index">{index + 1}</span>
-            <span className="set-row__main">
-              {formatKg(set.weightKg)} × {set.reps}
+            <span className="set-row__main">{formatSet(set, measure)}</span>
+            <span className="set-row__meta">
+              {measure === 'reps' && `1RM ≈ ${formatKg(epley1RM(set.weightKg, set.reps))}`}
             </span>
-            <span className="set-row__meta">1RM ≈ {formatKg(epley1RM(set.weightKg, set.reps))}</span>
             <button
               type="button"
               className="btn btn--icon btn--ghost btn--danger"
@@ -130,7 +144,7 @@ export function ExerciseLog({
 
       <form className="set-form" onSubmit={handleSubmit} noValidate>
         <div className="field">
-          <label htmlFor={weightId}>Gewicht (kg)</label>
+          <label htmlFor={weightId}>{form.weight}</label>
           <input
             id={weightId}
             className="input input--number"
@@ -145,7 +159,7 @@ export function ExerciseLog({
           />
         </div>
         <div className="field">
-          <label htmlFor={repsId}>Wiederholungen</label>
+          <label htmlFor={repsId}>{form.value}</label>
           <input
             id={repsId}
             className="input input--number"

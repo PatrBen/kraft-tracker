@@ -12,6 +12,10 @@ export interface Route {
 
 export type Navigate = (tab: Tab, id?: string | null) => void;
 
+/** Feste Unterseiten der Statistik (`#/stats/pushups`); sonst ist die ID eine Übung. */
+export const STATS_PUSHUPS = 'pushups';
+export const STATS_WEIGHT = 'weight';
+
 function parseHash(hash: string): Route {
   const [tabPart, idPart] = hash.replace(/^#\/?/, '').split('/');
   const tab = TABS.includes(tabPart as Tab) ? (tabPart as Tab) : 'journal';

@@ -1,13 +1,24 @@
-import type { Exercise, PlanExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from '../db/types';
+import type {
+  BodyWeightEntry,
+  Exercise,
+  PlanExercise,
+  PushupEntry,
+  WorkoutPlan,
+  WorkoutSession,
+  WorkoutSet,
+} from '../db/types';
 
 export const BACKUP_FORMAT = 'kraft-tracker-backup';
-export const BACKUP_VERSION = 1;
+/** v2: + Liegestütze, Körpergewicht, Messart je Übung. v1-Dateien bleiben importierbar. */
+export const BACKUP_VERSION = 2;
 
 export interface BackupData {
   exercises: Exercise[];
   workoutPlans: WorkoutPlan[];
   workoutSessions: WorkoutSession[];
   sets: WorkoutSet[];
+  pushups: PushupEntry[];
+  bodyWeights: BodyWeightEntry[];
 }
 
 interface BackupFile extends BackupData {
@@ -33,6 +44,8 @@ export function serializeBackup(data: BackupData, exportedAt = new Date()): stri
     workoutPlans: data.workoutPlans.map(withoutCloudProps),
     workoutSessions: data.workoutSessions.map(withoutCloudProps),
     sets: data.sets.map(withoutCloudProps),
+    pushups: data.pushups.map(withoutCloudProps),
+    bodyWeights: data.bodyWeights.map(withoutCloudProps),
   };
   return JSON.stringify(file, null, 2);
 }
@@ -98,10 +111,16 @@ export function parseBackup(text: string): BackupData {
     throw new Error('Das Backup stammt aus einer neueren App-Version – bitte die App aktualisieren.');
   }
 
+  // Tabellen, die es erst seit v2 gibt, fehlen in älteren Backups.
+  const sinceV2 = (value: unknown) => (raw.version === 1 && value === undefined ? [] : value);
+
   return {
     exercises: list(raw.exercises, 'exercises', (row, fail) => ({
       id: str(row, 'id', fail),
       name: str(row, 'name', fail),
+      ...(row.measure === undefined
+        ? {}
+        : { measure: row.measure === 'time' || row.measure === 'reps' ? row.measure : fail('measure') }),
       createdAt: date(row, 'createdAt', fail),
     })),
     workoutPlans: list(raw.workoutPlans, 'workoutPlans', (row, fail) => ({
@@ -125,6 +144,16 @@ export function parseBackup(text: string): BackupData {
       weightKg: num(row, 'weightKg', fail),
       reps: num(row, 'reps', fail),
       createdAt: date(row, 'createdAt', fail),
+    })),
+    pushups: list(sinceV2(raw.pushups), 'pushups', (row, fail) => ({
+      id: str(row, 'id', fail),
+      count: num(row, 'count', fail),
+      doneAt: date(row, 'doneAt', fail),
+    })),
+    bodyWeights: list(sinceV2(raw.bodyWeights), 'bodyWeights', (row, fail) => ({
+      id: str(row, 'id', fail),
+      weightKg: num(row, 'weightKg', fail),
+      measuredAt: date(row, 'measuredAt', fail),
     })),
   };
 }

@@ -37,6 +37,17 @@ export function formatClock(totalSeconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
+/** Haltezeit: unter einer Minute "45 s", sonst "1:30 min". */
+export function formatSeconds(seconds: number): string {
+  return seconds < 60 ? `${Math.round(seconds)} s` : `${formatClock(seconds)} min`;
+}
+
+/** Vorzeichen-Differenz, z. B. "+2,5 kg" / "−1 kg" / "±0 kg". */
+export function formatSignedKg(delta: number): string {
+  if (Math.abs(delta) < 0.05) return '±0 kg';
+  return `${delta > 0 ? '+' : '−'}${numberFormat.format(Math.abs(delta))} kg`;
+}
+
 export function formatDurationMinutes(from: Date, to: Date): string {
   return `${Math.max(1, Math.round((to.getTime() - from.getTime()) / 60000))} min`;
 }

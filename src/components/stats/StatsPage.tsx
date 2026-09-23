@@ -1,34 +1,26 @@
-import { useId, useMemo, useRef } from 'react';
-import { useExerciseIdsWithSets, useExerciseStats } from '../../hooks/useExerciseStats';
-import { useExercises } from '../../hooks/useExercises';
-import type { Navigate } from '../../hooks/useHashRoute';
-import { EmptyState } from '../common/EmptyState';
-import { ExerciseStats } from './ExerciseStats';
+import { STATS_PUSHUPS, STATS_WEIGHT, type Navigate } from '../../hooks/useHashRoute';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { BodyWeightStats } from './BodyWeightStats';
+import { ExerciseStatsView } from './ExerciseStatsView';
+import { PushupStats } from './PushupStats';
+
+type View = 'exercises' | typeof STATS_PUSHUPS | typeof STATS_WEIGHT;
+
+const VIEW_OPTIONS: { value: View; label: string }[] = [
+  { value: 'exercises', label: 'Übungen' },
+  { value: STATS_PUSHUPS, label: 'Liegestütze' },
+  { value: STATS_WEIGHT, label: 'Gewicht' },
+];
 
 interface StatsPageProps {
-  /** Gewählte Übung aus der URL (`#/stats/3`), sonst die erste mit Daten. */
+  /** Aus der URL: `pushups`, `weight` oder die ID einer Übung (`#/stats/<id>`). */
   exerciseId: string | null;
   navigate: Navigate;
 }
 
-export function StatsPage({ exerciseId, navigate }: StatsPageProps) {
-  const exercises = useExercises();
-  const idsWithSets = useExerciseIdsWithSets();
-  const selectId = useId();
-
-  const options = useMemo(
-    () => exercises?.filter((e) => idsWithSets?.has(e.id) || e.id === exerciseId) ?? [],
-    [exercises, idsWithSets, exerciseId],
-  );
-  const selectedId = exerciseId ?? options[0]?.id ?? null;
-  const stats = useExerciseStats(selectedId);
-
-  // Beim Übungswechsel die alte Darstellung halten, bis die neuen Daten da sind – kein Layout-Sprung.
-  const lastStatsRef = useRef(stats);
-  if (stats) lastStatsRef.current = stats;
-  const shownStats = stats ?? lastStatsRef.current;
-
-  if (exercises === undefined || idsWithSets === undefined) return null;
+export function StatsPage({ exerciseId: routeId, navigate }: StatsPageProps) {
+  const view: View =
+    routeId === STATS_PUSHUPS ? STATS_PUSHUPS : routeId === STATS_WEIGHT ? STATS_WEIGHT : 'exercises';
 
   return (
     <section>
@@ -36,38 +28,16 @@ export function StatsPage({ exerciseId, navigate }: StatsPageProps) {
         <h1>Statistik</h1>
       </div>
 
-      {options.length === 0 ? (
-        <EmptyState title="Noch keine Daten">
-          <p>Sobald du im Tagebuch Sätze einträgst, siehst du hier deine Entwicklung.</p>
-          <button type="button" className="btn btn--primary" onClick={() => navigate('journal')}>
-            Zum Tagebuch
-          </button>
-        </EmptyState>
-      ) : (
-        <>
-          <div className="filter-row">
-            <label htmlFor={selectId}>Übung</label>
-            <select
-              id={selectId}
-              className="input input--select"
-              value={selectedId ?? ''}
-              onChange={(e) => navigate('stats', e.target.value)}
-            >
-              {options.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <SegmentedControl
+        label="Statistik-Bereich"
+        options={VIEW_OPTIONS}
+        value={view}
+        onChange={(next) => navigate('stats', next === 'exercises' ? null : next)}
+      />
 
-          {shownStats && (
-            <div className={stats ? undefined : 'is-refreshing'}>
-              <ExerciseStats data={shownStats} />
-            </div>
-          )}
-        </>
-      )}
+      {view === 'exercises' && <ExerciseStatsView exerciseId={routeId} navigate={navigate} />}
+      {view === STATS_PUSHUPS && <PushupStats />}
+      {view === STATS_WEIGHT && <BodyWeightStats />}
     </section>
   );
 }

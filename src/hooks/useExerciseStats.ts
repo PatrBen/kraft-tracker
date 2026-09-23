@@ -1,9 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
-import { bestOneRepMaxPerSession, type SessionBest } from '../utils/oneRepMax';
+import type { ExerciseMeasure } from '../db/types';
+import { bestPerSession, type SessionBest } from '../utils/oneRepMax';
 
-/** Bestes geschätztes 1RM je Session für eine Übung, chronologisch. */
-export function useExerciseStats(exerciseId: string | null): SessionBest[] | undefined {
+/** Bestwert je Session für eine Übung (1RM bzw. Haltezeit), chronologisch. */
+export function useExerciseStats(
+  exerciseId: string | null,
+  measure: ExerciseMeasure,
+): SessionBest[] | undefined {
   return useLiveQuery(async () => {
     if (exerciseId === null) return [];
 
@@ -15,8 +19,8 @@ export function useExerciseStats(exerciseId: string | null): SessionBest[] | und
     for (const session of sessions) {
       if (session) sessionDates.set(session.id, session.startedAt);
     }
-    return bestOneRepMaxPerSession(sets, sessionDates);
-  }, [exerciseId]);
+    return bestPerSession(sets, sessionDates, measure);
+  }, [exerciseId, measure]);
 }
 
 /** IDs aller Übungen, zu denen mindestens ein Satz existiert (direkt aus dem Index). */

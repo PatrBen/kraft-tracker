@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { deletePlan } from '../../db/plans';
 import type { WorkoutPlan } from '../../db/types';
 import { useExerciseMap } from '../../hooks/useExercises';
-import type { Navigate } from '../../hooks/useHashRoute';
+import { STATS_PUSHUPS, STATS_WEIGHT, type Navigate } from '../../hooks/useHashRoute';
 import { useStartWorkout } from '../../hooks/useStartWorkout';
 import { useWorkoutPlans } from '../../hooks/useWorkoutPlans';
 import { EmptyState } from '../common/EmptyState';
+import { BodyWeightCard } from '../daily/BodyWeightCard';
+import { PushupCounter } from '../daily/PushupCounter';
 import { PlanCard } from './PlanCard';
 import { PlanEditor } from './PlanEditor';
 
@@ -27,8 +29,14 @@ export function PlansPage({ navigate }: { navigate: Navigate }) {
 
   return (
     <section>
-      <div className="page-header">
-        <h1>Trainingspläne</h1>
+      <h1 className="visually-hidden">Pläne</h1>
+      <div className="daily-grid">
+        <PushupCounter onOpenStats={() => navigate('stats', STATS_PUSHUPS)} />
+        <BodyWeightCard onOpenStats={() => navigate('stats', STATS_WEIGHT)} />
+      </div>
+
+      <div className="page-header page-header--spaced">
+        <h2 className="page-title">Trainingspläne</h2>
         <button type="button" className="btn btn--primary" onClick={() => setEditing('new')}>
           + Neuer Plan
         </button>

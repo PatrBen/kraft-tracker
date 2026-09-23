@@ -1,8 +1,9 @@
-import Dexie from 'dexie';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
-import { getActiveSession } from '../db/sessions';
+import { getActiveSession, getLastPerformance, type LastPerformance } from '../db/sessions';
 import type { WorkoutSession, WorkoutSet } from '../db/types';
+
+export type { LastPerformance };
 
 // Konvention: `undefined` = lädt noch, `null` = existiert nicht.
 
@@ -37,31 +38,14 @@ export function useSessionHistory(): SessionSummary[] | undefined {
   }, []);
 }
 
-export interface LastPerformance {
-  date: Date;
-  sets: WorkoutSet[];
-}
-
 /** Die Sätze der letzten Session vor `before`, in der diese Übung trainiert wurde. */
 export function useLastPerformance(
   exerciseId: string,
   before: Date,
 ): LastPerformance | null | undefined {
   const beforeTime = before.getTime();
-  return useLiveQuery(async () => {
-    const lastSet = await db.sets
-      .where('[exerciseId+createdAt]')
-      .between([exerciseId, Dexie.minKey], [exerciseId, new Date(beforeTime)], true, false)
-      .last();
-    if (!lastSet) return null;
-
-    const [session, sets] = await Promise.all([
-      db.workoutSessions.get(lastSet.sessionId),
-      db.sets
-        .where('[sessionId+exerciseId]')
-        .equals([lastSet.sessionId, exerciseId])
-        .sortBy('createdAt'),
-    ]);
-    return { date: session?.startedAt ?? lastSet.createdAt, sets };
-  }, [exerciseId, beforeTime]);
+  return useLiveQuery(
+    () => getLastPerformance(exerciseId, new Date(beforeTime)),
+    [exerciseId, beforeTime],
+  );
 }

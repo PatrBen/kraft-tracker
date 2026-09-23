@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dateTicks, niceAxis } from './chartAxis';
+import { dateTicks, niceAxis, zeroBasedAxis } from './chartAxis';
 
 describe('niceAxis', () => {
   it('liefert runde Ticks, die alle Werte einschließen', () => {
@@ -17,6 +17,14 @@ describe('niceAxis', () => {
     expect(domain[0]).toBeLessThan(100);
     expect(domain[1]).toBeGreaterThan(100);
     expect(ticks.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('zeroBasedAxis', () => {
+  it('beginnt bei 0 und endet auf einem runden Wert über dem Maximum', () => {
+    expect(zeroBasedAxis(48)).toEqual({ domain: [0, 60], ticks: [0, 20, 40, 60] });
+    expect(zeroBasedAxis(591).domain[1]).toBeGreaterThanOrEqual(591);
+    expect(zeroBasedAxis(0).ticks[0]).toBe(0);
   });
 });
 

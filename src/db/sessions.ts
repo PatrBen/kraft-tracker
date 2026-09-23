@@ -1,5 +1,6 @@
+import Dexie from 'dexie';
 import { db } from './db';
-import type { WorkoutPlan, WorkoutSession } from './types';
+import type { WorkoutPlan, WorkoutSession, WorkoutSet } from './types';
 
 /** `endedAt: null` ist nicht indizierbar, daher ein Scan – bei ein paar hundert Sessions unkritisch. */
 export function getActiveSession(): Promise<WorkoutSession | undefined> {
@@ -90,4 +91,30 @@ export function addSet(
 
 export function deleteSet(id: string): Promise<void> {
   return db.sets.delete(id);
+}
+
+export interface LastPerformance {
+  date: Date;
+  sets: WorkoutSet[];
+}
+
+/** Die Sätze der letzten Session vor `before`, in der diese Übung trainiert wurde. */
+export async function getLastPerformance(
+  exerciseId: string,
+  before: Date,
+): Promise<LastPerformance | null> {
+  const lastSet = await db.sets
+    .where('[exerciseId+createdAt]')
+    .between([exerciseId, Dexie.minKey], [exerciseId, before], true, false)
+    .last();
+  if (!lastSet) return null;
+
+  const [session, sets] = await Promise.all([
+    db.workoutSessions.get(lastSet.sessionId),
+    db.sets
+      .where('[sessionId+exerciseId]')
+      .equals([lastSet.sessionId, exerciseId])
+      .sortBy('createdAt'),
+  ]);
+  return { date: session?.startedAt ?? lastSet.createdAt, sets };
 }

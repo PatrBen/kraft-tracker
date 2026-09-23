@@ -20,6 +20,7 @@
   --chart-line: #e8641c;
   --chart-grid: #262a31;
   --chart-axis: #3a404a;
+  --chart-cursor: rgb(255 255 255 / 5%);
   --radius: 14px;
   --radius-sm: 10px;
   --shadow: none;
@@ -70,6 +71,16 @@ ol {
 
 .muted {
   color: var(--text-muted);
+}
+
+/* Für Screenreader lesbar, aber unsichtbar. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* ---------- App-Rahmen ---------- */
@@ -191,6 +202,15 @@ ol {
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 16px;
+}
+
+.page-header--spaced {
+  margin-top: 28px;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  line-height: 1.25;
 }
 
 .section-title {
@@ -573,10 +593,178 @@ ol {
   display: flex;
 }
 
+.editor-row__controls {
+  grid-area: stepper;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-row .editor-row__controls .stepper {
+  grid-area: auto;
+}
+
+.measure-toggle {
+  min-width: 52px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.measure-toggle:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
 @media (min-width: 560px) {
   .editor-row {
     grid-template-columns: 24px 1fr auto auto;
     grid-template-areas: 'index name stepper actions';
+  }
+}
+
+/* ---------- Tägliches: Liegestütze & Körpergewicht ---------- */
+
+.daily-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .daily-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.daily-grid .card + .card {
+  margin-top: 0;
+}
+
+.daily-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.daily-card__links {
+  display: flex;
+  margin-right: -8px;
+}
+
+.daily-card__value {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.daily-card__number {
+  color: var(--text);
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.daily-card__meta {
+  font-size: 0.875rem;
+}
+
+.daily-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.daily-card__plus {
+  flex: 1;
+  min-height: 52px;
+  font-size: 1.25rem;
+}
+
+.daily-card__plus-sub {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.daily-card__settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.daily-card__status {
+  margin-top: 8px;
+  font-size: 0.875rem;
+}
+
+.daily-card__form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+/* ---------- Umschalter ---------- */
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.segmented__option {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented__option:hover {
+  color: var(--text);
+}
+
+.segmented__option[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+section > .segmented {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 480px) {
+  .chart-card__header .segmented {
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .chart-card__header .segmented__option {
+    flex: 1 1 auto;
+    padding: 0 6px;
+    font-size: 0.8rem;
   }
 }
 
@@ -1069,6 +1257,56 @@ ol {
   margin-top: 2px;
   color: var(--text-muted);
   font-size: 0.875rem;
+}
+
+.chart-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chart-card__empty {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.chart-card__table {
+  margin-top: 12px;
+}
+
+.chart-card__table summary,
+.card details > summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.card details > summary.card__title {
+  color: var(--text);
+}
+
+.entry-list {
+  margin-top: 10px;
+}
+
+.entry-row {
+  display: grid;
+  grid-template-columns: 1fr auto 40px;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border-top: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-row__value {
+  font-weight: 700;
+}
+
+.session-export {
+  margin-top: 12px;
 }
 
 .chart {

@@ -1,8 +1,9 @@
 import { useId, useState, type FormEvent } from 'react';
-import { findOrCreateExercise, normalizeExerciseName } from '../../db/exercises';
+import { findOrCreateExercise, normalizeExerciseName, setExerciseMeasure } from '../../db/exercises';
 import { savePlan } from '../../db/plans';
 import type { PlanExercise, WorkoutPlan } from '../../db/types';
 import { useExerciseMap } from '../../hooks/useExercises';
+import { exerciseMeasure } from '../../utils/exerciseMeasure';
 import { ExerciseNameInput } from '../common/ExerciseNameInput';
 import { Stepper } from '../common/Stepper';
 
@@ -108,16 +109,32 @@ export function PlanEditor({ plan, onDone }: PlanEditorProps) {
       ) : (
         <ol className="editor-list">
           {items.map((item, index) => {
-            const exerciseName = exerciseMap?.get(item.exerciseId)?.name ?? '…';
+            const exercise = exerciseMap?.get(item.exerciseId);
+            const exerciseName = exercise?.name ?? '…';
+            const measure = exerciseMeasure(exercise);
             return (
               <li key={item.exerciseId} className="editor-row">
                 <span className="editor-row__index">{index + 1}</span>
                 <span className="editor-row__name">{exerciseName}</span>
-                <Stepper
-                  label={`Ziel-Sätze ${exerciseName}`}
-                  value={item.targetSets}
-                  onChange={(value) => updateTargetSets(index, value)}
-                />
+                <div className="editor-row__controls">
+                  <Stepper
+                    label={`Ziel-Sätze ${exerciseName}`}
+                    value={item.targetSets}
+                    onChange={(value) => updateTargetSets(index, value)}
+                  />
+                  <button
+                    type="button"
+                    className="measure-toggle"
+                    onClick={() =>
+                      setExerciseMeasure(item.exerciseId, measure === 'time' ? 'reps' : 'time')
+                    }
+                    disabled={!exercise}
+                    title="Messart umschalten: Wiederholungen oder Sekunden"
+                    aria-label={`${exerciseName} wird in ${measure === 'time' ? 'Sekunden' : 'Wiederholungen'} gemessen – umschalten`}
+                  >
+                    {measure === 'time' ? 'Sek.' : 'Wdh.'}
+                  </button>
+                </div>
                 <div className="editor-row__actions">
                   <button
                     type="button"

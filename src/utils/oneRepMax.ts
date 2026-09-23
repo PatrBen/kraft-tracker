@@ -1,26 +1,36 @@
-import type { WorkoutSet } from '../db/types';
+import type { ExerciseMeasure, WorkoutSet } from '../db/types';
 
 /** Geschätztes 1RM nach Epley: Gewicht × (1 + Wiederholungen / 30). */
 export function epley1RM(weightKg: number, reps: number): number {
   return weightKg * (1 + reps / 30);
 }
 
+/**
+ * Kennzahl eines Satzes für die Statistik: geschätztes 1RM (kg) bei Wiederholungsübungen,
+ * Haltezeit (s) bei zeitbasierten Übungen.
+ */
+export function setScore(set: Pick<WorkoutSet, 'weightKg' | 'reps'>, measure: ExerciseMeasure): number {
+  return measure === 'time' ? set.reps : epley1RM(set.weightKg, set.reps);
+}
+
 export interface SessionBest {
   sessionId: string;
   date: Date;
-  oneRepMax: number;
-  /** Der Satz, aus dem das beste 1RM der Session stammt. */
+  /** 1RM in kg bzw. Haltezeit in Sekunden – je nach Messart. */
+  value: number;
+  /** Der Satz, aus dem der Bestwert der Session stammt. */
   weightKg: number;
   reps: number;
 }
 
 /**
- * Bestes geschätztes 1RM pro Session, chronologisch aufsteigend sortiert.
+ * Bester Satz pro Session nach `setScore`, chronologisch aufsteigend sortiert.
  * Sätze, deren Session in `sessionDates` fehlt, werden ignoriert.
  */
-export function bestOneRepMaxPerSession(
+export function bestPerSession(
   sets: WorkoutSet[],
   sessionDates: Map<string, Date>,
+  measure: ExerciseMeasure,
 ): SessionBest[] {
   const bestBySession = new Map<string, SessionBest>();
 
@@ -28,13 +38,13 @@ export function bestOneRepMaxPerSession(
     const date = sessionDates.get(set.sessionId);
     if (!date) continue;
 
-    const oneRepMax = epley1RM(set.weightKg, set.reps);
+    const value = setScore(set, measure);
     const current = bestBySession.get(set.sessionId);
-    if (!current || oneRepMax > current.oneRepMax) {
+    if (!current || value > current.value) {
       bestBySession.set(set.sessionId, {
         sessionId: set.sessionId,
         date,
-        oneRepMax,
+        value,
         weightKg: set.weightKg,
         reps: set.reps,
       });

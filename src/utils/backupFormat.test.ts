@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { parseBackup, serializeBackup, type BackupData } from './backupFormat';
 
 const data: BackupData = {
-  exercises: [{ id: 'exe1', name: 'Bankdrücken', createdAt: new Date('2026-09-01T10:00:00Z') }],
+  exercises: [
+    { id: 'exe1', name: 'Bankdrücken', createdAt: new Date('2026-09-01T10:00:00Z') },
+    { id: 'exe2', name: 'Deadhang', measure: 'time', createdAt: new Date('2026-09-01T10:00:00Z') },
+  ],
+  pushups: [{ id: 'psh1', count: 12, doneAt: new Date('2026-09-22T08:00:00Z') }],
+  bodyWeights: [{ id: 'bw1', weightKg: 82.4, measuredAt: new Date('2026-09-22T06:30:00Z') }],
   workoutPlans: [
     {
       id: 'pln1',
@@ -59,6 +64,23 @@ describe('Backup-Format', () => {
   it('lehnt fremde Dateien und kaputtes JSON ab', () => {
     expect(() => parseBackup('{kaputt')).toThrow('kein gültiges JSON');
     expect(() => parseBackup('{"format":"etwas-anderes"}')).toThrow('keine Kraft-Tracker-Backup-Datei');
+  });
+
+  it('liest Backups der Version 1 (ohne Liegestütze und Gewicht) weiterhin ein', () => {
+    const file = JSON.parse(serializeBackup(data));
+    file.version = 1;
+    delete file.pushups;
+    delete file.bodyWeights;
+    const parsed = parseBackup(JSON.stringify(file));
+    expect(parsed.pushups).toEqual([]);
+    expect(parsed.bodyWeights).toEqual([]);
+    expect(parsed.sets).toEqual(data.sets);
+  });
+
+  it('lehnt eine unbekannte Messart ab', () => {
+    const file = JSON.parse(serializeBackup(data));
+    file.exercises[1].measure = 'meter';
+    expect(() => parseBackup(JSON.stringify(file))).toThrow('exercises[1].measure');
   });
 
   it('nennt das fehlerhafte Feld', () => {
