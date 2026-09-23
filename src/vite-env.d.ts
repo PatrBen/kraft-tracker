@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
   /** z. B. https://xxxxxxxx.dexie.cloud – leer lassen für rein lokalen Betrieb. */
