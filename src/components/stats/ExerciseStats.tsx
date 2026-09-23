@@ -22,6 +22,11 @@ const TEXTS: Record<ExerciseMeasure, { title: string; subtitle: string; valueLab
       `Körpergewicht: letzte Messung bis zum Trainingstag, davor ${formatKg(DEFAULT_BODY_WEIGHT_KG)}.`,
     valueLabel: 'geschätztes 1RM inkl. Körpergewicht',
   },
+  repsOnly: {
+    title: 'Meiste Wiederholungen',
+    subtitle: 'Bester Satz je Session',
+    valueLabel: 'Wiederholungen',
+  },
   time: {
     title: 'Längste Haltezeit in Sekunden',
     subtitle: 'Bester Satz je Session',
@@ -74,7 +79,8 @@ export function ExerciseStats({ data, measure }: ExerciseStatsProps) {
           label="Bestwert"
           value={format(best.value)}
           detail={
-            measure === 'time'
+            // Bei Zeit und reinen Wiederholungen steht der Satz schon im Wert selbst.
+            (measure === 'time' || measure === 'repsOnly') && best.weightKg === 0
               ? `am ${formatDate(best.date)}`
               : `${formatSet(best, measure)} am ${formatDate(best.date)}`
           }

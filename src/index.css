@@ -596,6 +596,7 @@ ol {
 .editor-row__controls {
   grid-area: stepper;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -606,7 +607,7 @@ ol {
 
 .measure-select {
   min-height: 44px;
-  max-width: 140px;
+  max-width: 100%;
   padding: 0 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

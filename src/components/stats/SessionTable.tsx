@@ -5,10 +5,18 @@ import type { SessionBest } from '../../utils/oneRepMax';
 import { formatScore, formatSet } from '../../utils/setFormat';
 
 function formatDelta(delta: number, measure: ExerciseMeasure): string {
-  if (measure !== 'time') return formatSignedKg(delta);
-  if (Math.round(delta) === 0) return '±0 s';
-  return `${delta > 0 ? '+' : '−'}${Math.abs(Math.round(delta))} s`;
+  if (measure === 'reps' || measure === 'bodyweight') return formatSignedKg(delta);
+  const unit = measure === 'time' ? 's' : 'Wdh.';
+  if (Math.round(delta) === 0) return `±0 ${unit}`;
+  return `${delta > 0 ? '+' : '−'}${Math.abs(Math.round(delta))} ${unit}`;
 }
+
+const VALUE_HEADER: Record<ExerciseMeasure, string> = {
+  reps: '1RM',
+  bodyweight: '1RM',
+  repsOnly: 'Wdh.',
+  time: 'Zeit',
+};
 
 interface SessionTableProps {
   data: SessionBest[];
@@ -36,7 +44,7 @@ export function SessionTable({ data, measure }: SessionTableProps) {
                 </th>
               )}
               <th scope="col" className="num">
-                {measure === 'time' ? 'Zeit' : '1RM'}
+                {VALUE_HEADER[measure]}
               </th>
               <th scope="col" className="num">
                 Δ Vorher

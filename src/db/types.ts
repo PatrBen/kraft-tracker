@@ -6,9 +6,10 @@
  * Wie eine Übung gemessen wird:
  * - `reps`: Gewicht × Wiederholungen (Langhantel, Maschine …)
  * - `bodyweight`: (Körpergewicht + Zusatzgewicht) × Wiederholungen (Klimmzüge …)
+ * - `repsOnly`: nur Wiederholungen, ohne Last-Berechnung (Leg Raises …)
  * - `time`: Haltezeit in Sekunden (Deadhang, Plank …)
  */
-export type ExerciseMeasure = 'reps' | 'bodyweight' | 'time';
+export type ExerciseMeasure = 'reps' | 'bodyweight' | 'repsOnly' | 'time';
 
 /** Eine Übung aus der Übungsbibliothek, z. B. "Bankdrücken". */
 export interface Exercise {

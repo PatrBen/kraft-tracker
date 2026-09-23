@@ -10,6 +10,7 @@ export function formatSet(set: SetValues, measure: ExerciseMeasure): string {
     case 'time':
       return `${formatSeconds(set.reps)}${extra}`;
     case 'bodyweight':
+    case 'repsOnly':
       return `${set.reps} Wdh.${extra}`;
     case 'reps':
       return `${formatKg(set.weightKg)} × ${set.reps}`;
@@ -23,13 +24,22 @@ export function formatSetShort(set: SetValues, measure: ExerciseMeasure): string
     case 'time':
       return `${formatSeconds(set.reps)}${extra}`;
     case 'bodyweight':
+    case 'repsOnly':
       return `${set.reps} Wdh.${extra}`;
     case 'reps':
       return `${formatNumber(set.weightKg)} × ${set.reps}`;
   }
 }
 
-/** Statistik-Kennzahl: geschätztes 1RM "79,2 kg" bzw. Haltezeit "45 s". */
+/** Statistik-Kennzahl: geschätztes 1RM "79,2 kg", Haltezeit "45 s" bzw. "12 Wdh.". */
 export function formatScore(value: number, measure: ExerciseMeasure): string {
-  return measure === 'time' ? formatSeconds(value) : formatKg(value);
+  switch (measure) {
+    case 'time':
+      return formatSeconds(value);
+    case 'repsOnly':
+      return `${formatNumber(value)} Wdh.`;
+    case 'reps':
+    case 'bodyweight':
+      return formatKg(value);
+  }
 }

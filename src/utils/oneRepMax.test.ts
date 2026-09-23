@@ -63,6 +63,11 @@ describe('bestPerSession', () => {
     expect(result[1].bodyWeight?.weightKg).toBe(82);
   });
 
+  it('wertet "nur Wiederholungen" nach der höchsten Wiederholungszahl', () => {
+    const result = bestPerSession([set('a', 's1', 0, 10), set('b', 's1', 0, 12), set('c', 's1', 5, 8)], dates, 'repsOnly');
+    expect(result[0]).toMatchObject({ value: 12, reps: 12 });
+  });
+
   it('ignoriert Sätze ohne bekannte Session', () => {
     expect(bestPerSession([set('a', 'unbekannt', 100, 5)], dates, 'reps')).toEqual([]);
   });

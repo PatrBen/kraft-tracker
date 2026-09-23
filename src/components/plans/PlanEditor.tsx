@@ -10,6 +10,7 @@ import { Stepper } from '../common/Stepper';
 const MEASURE_OPTIONS: { value: ExerciseMeasure; label: string }[] = [
   { value: 'reps', label: 'Gewicht' },
   { value: 'bodyweight', label: 'Körpergewicht' },
+  { value: 'repsOnly', label: 'Nur Wiederholungen' },
   { value: 'time', label: 'Sekunden' },
 ];
 

@@ -10,6 +10,7 @@ export function epley1RM(weightKg: number, reps: number): number {
  * Kennzahl eines Satzes für die Statistik:
  * - `reps`: geschätztes 1RM aus Gewicht × Wiederholungen
  * - `bodyweight`: geschätztes 1RM aus (Körpergewicht + Zusatzgewicht) × Wiederholungen
+ * - `repsOnly`: Anzahl der Wiederholungen
  * - `time`: Haltezeit in Sekunden
  */
 export function setScore(
@@ -19,6 +20,7 @@ export function setScore(
 ): number {
   switch (measure) {
     case 'time':
+    case 'repsOnly':
       return set.reps;
     case 'bodyweight':
       return epley1RM(bodyWeightKg + set.weightKg, set.reps);

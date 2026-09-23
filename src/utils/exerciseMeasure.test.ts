@@ -14,8 +14,14 @@ describe('guessMeasure', () => {
     }
   });
 
+  it('erkennt Übungen, bei denen nur die Wiederholungen zählen', () => {
+    for (const name of ['Leg Raises', 'Hanging Leg Raise', 'Leg-Raises', 'Beinheben', 'Knee Raises']) {
+      expect(guessMeasure(name), name).toBe('repsOnly');
+    }
+  });
+
   it('bleibt sonst bei Gewicht × Wiederholungen', () => {
-    for (const name of ['Bankdrücken', 'Latzug', 'Pullover', 'Hanging Leg Raise', 'Kniebeuge']) {
+    for (const name of ['Bankdrücken', 'Latzug', 'Pullover', 'Kniebeuge', 'Side crunches']) {
       expect(guessMeasure(name), name).toBe('reps');
     }
   });

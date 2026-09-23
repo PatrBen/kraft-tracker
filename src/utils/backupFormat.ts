@@ -88,7 +88,7 @@ function planExercises(row: Row, key: string, fail: Fail): PlanExercise[] {
 }
 
 function isMeasure(value: unknown): value is ExerciseMeasure {
-  return value === 'reps' || value === 'bodyweight' || value === 'time';
+  return value === 'reps' || value === 'bodyweight' || value === 'repsOnly' || value === 'time';
 }
 
 function list<T>(value: unknown, table: string, parseRow: (row: Row, fail: Fail) => T): T[] {

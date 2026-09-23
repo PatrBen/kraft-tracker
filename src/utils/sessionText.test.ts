@@ -37,6 +37,16 @@ const input: SessionTextInput = {
       ],
       previous: { date: new Date(2026, 8, 15), sets: [{ weightKg: 0, reps: 5 }] },
     },
+    {
+      name: 'Leg Raises',
+      measure: 'repsOnly',
+      targetSets: 2,
+      sets: [
+        { weightKg: 0, reps: 10 },
+        { weightKg: 0, reps: 12 },
+      ],
+      previous: null,
+    },
     { name: 'Dips', measure: 'reps', targetSets: 3, sets: [], previous: null },
   ],
 };
@@ -70,6 +80,14 @@ describe('sessionToText', () => {
     expect(text).toContain('Satz 2: 3 Wdh. mit Körpergewicht + 5 kg Zusatzgewicht (geschätztes 1RM 96,1 kg)');
     expect(text).toContain('Bester Satz: 7 Wdh. → geschätztes 1RM 101,6 kg (inkl. Körpergewicht)');
     expect(text).toContain('Letztes Mal (15.09.2026): 5 Wdh.');
+    expect(text).toContain('Gesamtvolumen: 937,5 kg');
+  });
+
+  it('wertet "nur Wiederholungen" ohne 1RM und ohne Volumen aus', () => {
+    expect(text).toContain('Leg Raises – 2 von 2 geplanten Sätzen');
+    expect(text).toContain('Satz 2: 12 Wdh.\n');
+    expect(text).toContain('Meiste Wiederholungen: 12 Wdh.');
+    expect(text).toContain('nur nach Wiederholungen ausgewertet');
     expect(text).toContain('Gesamtvolumen: 937,5 kg');
   });
 

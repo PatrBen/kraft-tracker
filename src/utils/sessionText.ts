@@ -33,6 +33,8 @@ function describeSet(set: SetValues, measure: ExerciseMeasure, bodyWeightKg: num
       return `${formatSeconds(set.reps)}${set.weightKg > 0 ? ` mit ${formatKg(set.weightKg)} Zusatzgewicht` : ''}`;
     case 'bodyweight':
       return `${set.reps} Wdh. mit Körpergewicht${set.weightKg > 0 ? ` + ${formatKg(set.weightKg)} Zusatzgewicht` : ''} (${oneRepMax})`;
+    case 'repsOnly':
+      return `${set.reps} Wdh.${set.weightKg > 0 ? ` mit ${formatKg(set.weightKg)} Zusatzgewicht` : ''}`;
     case 'reps':
       return `${formatKg(set.weightKg)} × ${set.reps} Wdh. (${oneRepMax})`;
   }
@@ -44,9 +46,24 @@ function shortSet(set: SetValues, measure: ExerciseMeasure): string {
     case 'time':
       return `${formatSeconds(set.reps)}${extra}`;
     case 'bodyweight':
+    case 'repsOnly':
       return `${set.reps} Wdh.${extra}`;
     case 'reps':
       return `${formatKg(set.weightKg)} × ${set.reps}`;
+  }
+}
+
+/** Zeile mit dem Bestwert einer Übung, passend zur Messart. */
+function bestLine(best: SetValues, measure: ExerciseMeasure, score: number): string {
+  switch (measure) {
+    case 'time':
+      return `  Längste Haltezeit: ${formatSeconds(best.reps)}`;
+    case 'repsOnly':
+      return `  Meiste Wiederholungen: ${shortSet(best, measure)}`;
+    case 'bodyweight':
+      return `  Bester Satz: ${shortSet(best, measure)} → geschätztes 1RM ${formatScore(score, measure)} (inkl. Körpergewicht)`;
+    case 'reps':
+      return `  Bester Satz: ${shortSet(best, measure)} → geschätztes 1RM ${formatScore(score, measure)}`;
   }
 }
 
@@ -97,12 +114,7 @@ export function sessionToText(input: SessionTextInput): string {
 
     if (sets.length > 0) {
       const best = sets.reduce((a, b) => (score(b) > score(a) ? b : a));
-      lines.push(
-        measure === 'time'
-          ? `  Längste Haltezeit: ${formatSeconds(best.reps)}`
-          : `  Bester Satz: ${shortSet(best, measure)} → geschätztes 1RM ${formatScore(score(best), measure)}` +
-              (measure === 'bodyweight' ? ' (inkl. Körpergewicht)' : ''),
-      );
+      lines.push(bestLine(best, measure, score(best)));
       if (measure === 'reps') {
         lines.push(`  Volumen: ${formatNumber(volume(sets))} kg`);
         totalVolume += volume(sets);
@@ -127,6 +139,9 @@ export function sessionToText(input: SessionTextInput): string {
     lines.push(
       'Körpergewichtsübungen (z. B. Klimmzüge) sind mit Körpergewicht + Zusatzgewicht gerechnet und zählen nicht zum Volumen.',
     );
+  }
+  if (input.exercises.some((e) => e.measure === 'repsOnly' && e.sets.length > 0)) {
+    lines.push('Übungen wie Leg Raises werden nur nach Wiederholungen ausgewertet und zählen nicht zum Volumen.');
   }
   if (input.exercises.some((e) => e.measure === 'time' && e.sets.length > 0)) {
     lines.push('Halteübungen (z. B. Deadhang) sind in Sekunden angegeben und zählen nicht zum Volumen.');

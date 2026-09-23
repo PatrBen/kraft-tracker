@@ -22,6 +22,12 @@ const FORM: Record<ExerciseMeasure, { weight: string; value: string; max: number
     max: 100,
     error: 'Bitte gültige Wiederholungen eingeben (1–100).',
   },
+  repsOnly: {
+    weight: 'Zusatzgewicht (kg)',
+    value: 'Wiederholungen',
+    max: 500,
+    error: 'Bitte gültige Wiederholungen eingeben (1–500).',
+  },
   time: {
     weight: 'Zusatzgewicht (kg)',
     value: 'Sekunden',
@@ -140,7 +146,8 @@ export function ExerciseLog({
             <span className="set-row__index">{index + 1}</span>
             <span className="set-row__main">{formatSet(set, measure)}</span>
             <span className="set-row__meta">
-              {measure !== 'time' && `1RM ≈ ${formatKg(setScore(set, measure, bodyWeight.weightKg))}`}
+              {(measure === 'reps' || measure === 'bodyweight') &&
+                `1RM ≈ ${formatKg(setScore(set, measure, bodyWeight.weightKg))}`}
             </span>
             <button
               type="button"
